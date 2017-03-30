@@ -1,0 +1,129 @@
+---
+title: "X-Wide Association Study in HIV+ in Zambian Females"
+---
+
+```{r setup, include=FALSE}
+## hide the above
+## commit to GitHub
+
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(ggrepel)
+library(plotly)
+library(DT)
+load('../merged_output/merged.Rdata')
+
+mergedResults$merged_data$consistent_07_13 <- mergedResults$merged_data$replicated_univariate_07 & mergedResults$merged_data$replicated_univariate_13
+```
+
+## Authors (and contact):
+- Chirag J Patel (chirag[at]hms[dot]harvard[dot]edu)
+- Jay Bhattacharya 
+- John PA Ioannidis
+- Eran Bendavid (ebd[at]stanford[dot]edu)
+
+(Submitted, 2017)
+
+## Univariate -log10(pvalue) vs. association sizes in 2007 and 2013-2014
+- Consistent (replicated in 2007 and 2013-2014 are shown in cyan)
+
+```{r, echo=FALSE}
+labelVars <- subset(mergedResults$merged_data, consistent_07_13 == T)
+first <- mergedResults$merged_data[, c('consistent_07_13', 'variable', 'var_label', 'value_label', 'estimate_univariate_07', 'pvalue_univariate_07')]
+first$year <- '2007'
+second <- mergedResults$merged_data[, c('consistent_07_13', 'variable', 'var_label', 'value_label', 'estimate_univariate_13', 'pvalue_univariate_13')]
+second$year <- '2013-2014'
+colnames(first) <- colnames(second) <- c('consistent_07_13', 'variable', 'var_label', 'value_label', 'estimate', 'pvalue', 'year')
+toPlot <- rbind(first, second)
+
+toPlot$plot_label <- toPlot$var_label
+toPlot$plot_label[toPlot$value_label != ''] <- paste(toPlot$var_label[toPlot$value_label != ''], 
+                                                         '(', toPlot$value_label[toPlot$value_label != ''], ')', sep="")
+```
+
+
+```{r, echo=FALSE, width=7, height=5}
+toLabel <- subset(toPlot, consistent_07_13==TRUE)
+labelVarsTop <- labelVars[order(labelVars$pvalue_univariate_13, decreasing=F)[1:10], ]
+toLabel <- toLabel[toLabel$variable %in% labelVarsTop$variable, ]
+#toPlot$odds_ratio <- exp(toPlot$estimate)
+p <- ggplot(toPlot, aes(exp(estimate), -log10(pvalue), 
+                        color=consistent_07_13,
+                        text=plot_label))
+p <- p + geom_point(alpha=.5) + scale_x_log10() + facet_grid(. ~ year)
+p <- p + theme(legend.position="none") + xlab('Odds Ratio')
+p <- ggplotly(p)
+p
+```
+
+### Zooming in on the consistent results only
+```{r, echo=FALSE, width=7, height=5}
+p <- ggplot(toLabel, aes(exp(estimate), -log10(pvalue)))
+p <- p + geom_point() + geom_text_repel(data=toLabel, mapping=aes(exp(estimate), -log10(pvalue),label=plot_label), size=2, color='black')
+p <- p + facet_grid(. ~ year)
+p <- p + theme(legend.position="none") + xlab('Odds Ratio')
+p
+```
+
+## Univariate models in 2007 and 2013-2014
+
+- OR_07: Odds ratio in 2007 (nlogp_07 is the -log10(pvalue) of association)
+- OR_13: Odds ratio in 2013 (nlogp_13 is the -log10(pvalue) of association)
+- consistent_07_13: Finding that was replicated in the univariate model in both 2007 and 2013-2014
+- For binary variables, the odds ratio is interpreted for the group denoted in the 'value_label' column.
+
+
+```{r, echo=FALSE}
+toTable <- mergedResults$merged_data[, c('consistent_07_13', 'variable_univariate_07', 'var_label', 'value_label',                                     'odds_ratio_univariate_07','odds_ratio_univariate_13', 
+'pvalue_univariate_07', 'pvalue_univariate_13')]
+
+toTable$OR_07 <- round(toTable$odds_ratio_univariate_07,2)
+toTable$OR_13 <- round(toTable$odds_ratio_univariate_13,2)
+toTable$odds_ratio_univariate_07 <- NULL
+toTable$odds_ratio_univariate_13 <- NULL
+
+toTable$nlogp_07 <- round(-log10(toTable$pvalue_univariate_07),2)
+toTable$nlogp_13 <- round(-log10(toTable$pvalue_univariate_13),2)
+toTable$pvalue_univariate_07 <- NULL
+toTable$pvalue_univariate_13 <- NULL
+toTable$varname <- toTable$variable_univariate_07
+toTable$variable_univariate_07 <- NULL
+toTable <- toTable[, c('varname', 'consistent_07_13', 'var_label', 'value_label', 'OR_07','OR_13', 
+'nlogp_07', 'nlogp_13')]
+
+DT::datatable(toTable, rownames=F)
+```
+
+
+## Associations under different modeling scenarios
+
+* Univariate: no adjustments in association with HIV+ status
+* *Ex ante* or "apriori"" model: 
+    + v190_1, 2, 3, 4, 5: wealth index (1, 2, 3, 4, 5)
+    + v025: type of place of residence (0,1)
+    + v525_1: recent sexual activity (0,1)
+    + v010: repondent's year of birth (as year)
+    + v190_5: ever tested for HIV
+
+  
+```{r, echo=FALSE}
+datModel07 <- mergedResults$merged_data[, c('consistent_07_13', 'variable', 'var_label', 'value_label', 'estimate_univariate_07', 'estimate_apriori_adj_07')]
+datModel07$plot_label <- datModel07$var_label
+datModel07$plot_label[datModel07$value_label != ''] <- paste(datModel07$var_label[datModel07$value_label != ''], 
+                                                         '(', datModel07$value_label[datModel07$value_label != ''], ')', sep="")
+
+p <- ggplot(datModel07, aes(estimate_univariate_07, estimate_apriori_adj_07, color=consistent_07_13, text=plot_label))
+p <- p + geom_point() + geom_abline() 
+ggplotly(p)
+
+## 2013-2014
+datModel13 <- mergedResults$merged_data[, c('consistent_07_13', 'variable', 'var_label', 'value_label', 'estimate_univariate_13', 'estimate_aprior_adj_13')]
+
+datModel13$plot_label <- datModel13$var_label
+datModel13$plot_label[datModel13$value_label != ''] <- paste(datModel13$var_label[datModel13$value_label != ''], 
+                                                         '(', datModel13$value_label[datModel13$value_label != ''], ')', sep="")
+
+p <- ggplot(datModel13, aes(estimate_univariate_13, estimate_aprior_adj_13, color=consistent_07_13, text=plot_label))
+p <- p + geom_point() + geom_abline() 
+ggplotly(p)
+```
