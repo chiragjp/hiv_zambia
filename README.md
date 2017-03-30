@@ -18,4 +18,4 @@ We conducted a comprehensive analysis to identify and replicate the association 
 
 ## Getting Started
 - This github repository contains data processing and analysis code to execute 'X-wide association' in DHS data; please contact us or more information.
-- A browsable synposis of our findings can be found here: 
+- A browsable synposis of our findings can be found here: <a href='http://www.chiragjpgroup.org/hiv_zambia/'>chiragjpgroup.org/hiv_zambia/</a> 
