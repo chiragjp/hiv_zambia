@@ -6,8 +6,8 @@ library(ROCR)
 library(rms)
 library(ggplot2)
 
-dat07 <- read.csv('../data/hiv xwas Zambia07 dataset v7.csv')
-dat13 <- read.csv('../data/hiv xwas Zambia13 dataset v7.csv')
+dat07 <- read.csv('https://www.dropbox.com/s/o2t036qjd4v8lii/hiv%20xwas%20Zambia07%20dataset%20v7.csv?dl=0')
+dat13 <- read.csv('https://www.dropbox.com/s/k87iv7ouolpvraf/hiv%20xwas%20Zambia13%20dataset%20v7.csv?dl=0')
 load('./merged_output/merged.Rdata')
 
 dat07 <- subset(dat07, hiv03 <= 1)

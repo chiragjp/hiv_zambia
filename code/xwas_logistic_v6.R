@@ -20,7 +20,7 @@ opt <- getopt(matrix(c(
 
 DEBUG <- T
 if(DEBUG) {
-  opt$filein <- '../data/hiv xwas Zambia07 dataset v7.csv'
+  opt$filein <- 'https://www.dropbox.com/s/k87iv7ouolpvraf/hiv%20xwas%20Zambia13%20dataset%20v7.csv?dl=0'
   opt$fileout <- 'apriori_adj_07.Rdata'
   opt$suffix <- 'apriori_adj_07' 
   opt$adjustment_script <- 'apriori_adjustments.R'

@@ -1,6 +1,6 @@
 library(polycor)
 #dat <- read.csv('../data/hiv xwas Zambia07 dataset v7.csv')
-dat <- read.csv('../data/hiv xwas Zambia13 dataset v7.csv')
+dat <- read.csv('https://www.dropbox.com/s/k87iv7ouolpvraf/hiv%20xwas%20Zambia13%20dataset%20v7.csv?dl=0')
 dat$v000 <- NULL
 dat$cname <- NULL
 dat$id1 <- NULL
