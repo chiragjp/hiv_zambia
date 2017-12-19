@@ -1,7 +1,20 @@
 library(ggplot2)
 library(ggrepel)
-load('./merged_output/merged.Rdata')
 
+MALES <- T
+MERGED_DATA_FRAME <- './merged_output/merged.Rdata' # for females
+
+if(MALES) {
+  MERGED_DATA_FRAME <- './merged_output/male_merged.Rdata'  
+} 
+
+load(MERGED_DATA_FRAME)
+
+if(MALES) {
+  mergedResults$merged_data$variable <- mergedResults$merged_data$variable_univariate_07
+  mergedResults$merged_data$var_label <- mergedResults$merged_data$var_label_07
+  mergedResults$merged_data$value_label <- mergedResults$merged_data$value_label_07
+}
 
 mergedResults$merged_data$consistent_07_13 <- mergedResults$merged_data$replicated_univariate_07 & mergedResults$merged_data$replicated_univariate_13
 labelVars <- subset(mergedResults$merged_data, consistent_07_13 == T)
@@ -13,11 +26,11 @@ second$year <- '2013-2014'
 
 colnames(first) <- colnames(second) <- c('consistent_07_13', 'variable', 'var_label', 'value_label', 'estimate', 'pvalue', 'year')
 toPlot <- rbind(first, second)
-
+toPlot <- subset(toPlot, !is.na(consistent_07_13))
 toPlot$plot_label <- toPlot$var_label
-toPlot$plot_label[toPlot$value_label != ''] <- paste(toPlot$var_label[toPlot$value_label != ''], 
-                                                         '(', toPlot$value_label[toPlot$value_label != ''], ')', sep="")
 
+ind <- toPlot$value_label != '' & !is.na(toPlot$value_label)
+toPlot$plot_label[ind] <- paste(toPlot$var_label[ind], '(', toPlot$value_label[ind], ')', sep="")
 
 toLabel <- subset(toPlot, consistent_07_13==TRUE)
 labelVarsTop <- labelVars[order(labelVars$pvalue_univariate_13, decreasing=F)[1:10], ]
@@ -27,8 +40,6 @@ p <- ggplot(toPlot, aes(exp(estimate), -log10(pvalue), color=consistent_07_13))
 p <- p + geom_point(alpha=.5) + scale_x_log10() + facet_wrap(~ year, nrow=2)
 p <- p + theme(legend.position="none") + xlab('Odds Ratio')
 p
-
-
 
 
 ## without numbers

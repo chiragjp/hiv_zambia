@@ -1,0 +1,107 @@
+---
+title: "HIV+ in Zambian Females and Males"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+# An X-wide association study (XWAS) in HIV+ of Zambians
+Chirag J Patel, Jay Bhattacharya, John PA Ioannidis, and Eran Bendavid
+
+## -log10(pvalue) vs. association sizes in 2007 and 2013-2014 for both sexes
+Consistent (replicated in 2007 and 2013-2014 are shown in cyan)
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(ggrepel)
+library(plotly)
+library(DT)
+```
+
+```{r, echo=FALSE}
+### male results
+load('../merged_output/male_merged.Rdata')
+mergedResults_male <- mergedResults
+mergedResults_male$merged_data$variable <- mergedResults$merged_data$variable_univariate_07
+mergedResults_male$merged_data$var_label <- mergedResults$merged_data$var_label_07
+mergedResults_male$merged_data$value_label <- mergedResults$merged_data$value_label_07
+mergedResults_male$merged_data$consistent_07_13 <- mergedResults$merged_data$replicated_univariate_07 == T & mergedResults$merged_data$replicated_univariate_13 == T
+### prepare the female results
+load('../merged_output/merged.Rdata')
+mergedResults$merged_data$consistent_07_13 <- mergedResults$merged_data$replicated_univariate_07 & mergedResults$merged_data$replicated_univariate_13
+
+### mash them up
+first <- mergedResults$merged_data[, c('consistent_07_13', 'variable', 'var_label', 'value_label', 'estimate_univariate_07', 'pvalue_univariate_07')]
+first$year <- '2007'
+second <- mergedResults$merged_data[, c('consistent_07_13', 'variable', 'var_label', 'value_label', 'estimate_univariate_13', 'pvalue_univariate_13')]
+second$year <- '2013-2014'
+colnames(first) <- colnames(second) <- c('consistent_07_13', 'variable', 'var_label', 'value_label', 'estimate', 'pvalue', 'year')
+toPlot <- rbind(first, second)
+toPlot$sex <- 'female'
+
+third <- mergedResults_male$merged_data[, c('consistent_07_13', 'variable', 'var_label', 'value_label', 'estimate_univariate_07', 'pvalue_univariate_07')]
+third$year <- '2007'
+fourth <- mergedResults_male$merged_data[, c('consistent_07_13', 'variable', 'var_label', 'value_label', 'estimate_univariate_13', 'pvalue_univariate_13')]
+fourth$year <- '2013-2014'
+colnames(third) <- colnames(fourth) <- c('consistent_07_13', 'variable', 'var_label', 'value_label', 'estimate', 'pvalue', 'year')
+toPlot2 <- rbind(third, fourth)
+toPlot2$sex <- 'male'
+toPlot <- rbind(toPlot, toPlot2)
+toPlot$plot_label <- toPlot$var_label
+ind <- toPlot$value_label != '' & !is.na(toPlot$value_label)
+toPlot$plot_label[ind] <- paste(toPlot$var_label[ind], '(', toPlot$value_label[ind], ')', sep="")
+
+```
+
+
+```{r, echo=FALSE}
+labelVars <- subset(mergedResults$merged_data, consistent_07_13 == T)
+toLabel <- subset(toPlot, consistent_07_13==TRUE)
+p <- ggplot(toPlot, aes(exp(estimate), -log10(pvalue), 
+                        color=consistent_07_13,
+                        text=plot_label))
+p <- p + geom_point(alpha=.5) + scale_x_log10() + facet_grid(sex ~ year)
+p <- p + theme(legend.position="none") + xlab('Odds Ratio')
+p <- ggplotly(p)
+p
+
+```
+
+### Zooming in on the consistent results only
+```{r, echo=FALSE, width=7, height=5}
+p <- ggplot(toLabel, aes(exp(estimate), -log10(pvalue), text=plot_label))
+p <- p + geom_point()
+p <- p + facet_grid(sex ~ year)
+p <- p + theme(legend.position="none") + xlab('Odds Ratio')
+p <- ggplotly(p)
+p
+```
+
+# Table of results
+## Univariate models in 2007 and 2014-2014
+```{r, echo=FALSE}
+male <- mergedResults_male$merged_data[, c('consistent_07_13', 'var_label', 'value_label',                                     'odds_ratio_univariate_07','odds_ratio_univariate_13', 
+'pvalue_univariate_07', 'pvalue_univariate_13'
+)]
+female <- mergedResults$merged_data[, c('consistent_07_13', 'var_label', 'value_label',                                     'odds_ratio_univariate_07','odds_ratio_univariate_13', 
+'pvalue_univariate_07', 'pvalue_univariate_13'
+)]
+female$sex <- 'female'
+male$sex <- 'male'
+toTable <- rbind(male,female)
+
+toTable$OR_07 <- round(toTable$odds_ratio_univariate_07,2)
+toTable$OR_13 <- round(toTable$odds_ratio_univariate_13,2)
+toTable$odds_ratio_univariate_07 <- NULL
+toTable$odds_ratio_univariate_13 <- NULL
+
+toTable$nlogp_07 <- round(-log10(toTable$pvalue_univariate_07),2)
+toTable$nlogp_13 <- round(-log10(toTable$pvalue_univariate_13),2)
+toTable$pvalue_univariate_07 <- NULL
+toTable$pvalue_univariate_13 <- NULL
+
+DT::datatable(toTable, rownames=F)
+```
+
